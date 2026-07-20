@@ -1,4 +1,4 @@
-const CACHE_NAME = 'invest-master-v5.8.3-ULTRA-FORCE';
+const CACHE_NAME = 'invest-master-v6.0.0-1784590623';
 const assets = ['./index.html', './manifest.json'];
 self.addEventListener('install', (e) => {
   self.skipWaiting();
