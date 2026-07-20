@@ -1,14 +1,17 @@
 {
-  "name": "Calculadora CDI",
-  "short_name": "CDI",
-  "description": "Calcule o rendimento do CDI com atualização automática do Banco Central",
-  "start_url": "/",
+  "name": "Invest Master Pro",
+  "short_name": "InvestMaster",
+  "description": "Calculadora de Investimentos Profissional CDI vs Poupança",
+  "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#0ea5e9",
-  "orientation": "portrait-primary",
+  "background_color": "#05070a",
+  "theme_color": "#00f2ff",
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2452/2452144.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
   ]
 }
