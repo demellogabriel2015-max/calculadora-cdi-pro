@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instalador Invest Master Pro</title>
+    <style>
+        body {
+            background: #05070a;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+            padding: 20px;
+        }
+        .card {
+            background: #0f172a;
+            padding: 30px;
+            border-radius: 24px;
+            border: 1px solid #00f2ff;
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
+            max-width: 400px;
+        }
+        img { width: 80px; border-radius: 20px; margin-bottom: 20px; }
+        h1 { font-size: 1.5rem; margin-bottom: 10px; color: #00f2ff; }
+        p { color: #94a3b8; font-size: 0.9rem; margin-bottom: 25px; }
+        .btn-install {
+            background: #00f2ff;
+            color: #000;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-weight: 800;
+            text-decoration: none;
+            display: inline-block;
+            cursor: pointer;
+            border: none;
+            width: 100%;
+        }
+        .instructions {
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: #fbbf24;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <img src="https://cdn-icons-png.flaticon.com/512/2452/2452144.png" alt="Logo">
+        <h1>Instalador Profissional</h1>
+        <p>Clique no botão abaixo para instalar a Calculadora Invest Master Pro no seu dispositivo.</p>
+        
+        <button id="installBtn" class="btn-install">INSTALAR AGORA</button>
+        
+        <div id="androidInstructions" class="instructions">
+            No Chrome, toque nos 3 pontinhos e depois em "Instalar aplicativo".
+        </div>
+        <div id="iosInstructions" class="instructions">
+            Toque no ícone de compartilhar e depois em "Adicionar à Tela de Início".
+        </div>
+    </div>
+
+    <script>
+        let deferredPrompt;
+        const btn = document.getElementById('installBtn');
+        const androidInst = document.getElementById('androidInstructions');
+        const iosInst = document.getElementById('iosInstructions');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            btn.style.display = 'block';
+        });
+
+        btn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                deferredPrompt = null;
+            } else {
+                const ua = navigator.userAgent.toLowerCase();
+                if (ua.indexOf("android") > -1) {
+                    androidInst.style.display = 'block';
+                } else if (ua.indexOf("iphone") > -1 || ua.indexOf("ipad") > -1) {
+                    iosInst.style.display = 'block';
+                } else {
+                    alert("Por favor, abra este link no seu celular (Chrome ou Safari).");
+                }
+            }
+        });
+    </script>
+</body>
+</html>
