@@ -219,24 +219,21 @@
 
 <footer>
   <span class="footer-name">APP GABRIEL DE MELLO</span>
-  VERSION 12.0.0-FORCE-UPDATE</footer>
+  VERSION 13.0.0-REAL-FIX</footer>
 
 <script>
   let chart;
   let cdiData = { cdi: 14.15, selic: 14.25 };
 
   async function init() {
-    try {
-      const resp = await fetch('https://api.bcb.gov.br/dados/serie/bcdata.sgs.12/dados/ultimos/1?formato=json');
-      const data = await resp.json();
-      cdiData.cdi = parseFloat(data[0].valor) * 252;
-      cdiData.selic = cdiData.cdi + 0.10;
-      document.getElementById('statusBCB').textContent = 'ONLINE - DADOS BCB';
-      document.getElementById('statusBCB').style.background = '#064e3b';
-      document.getElementById('statusBCB').style.color = '#34d399';
-    } catch(e) {
-      document.getElementById('statusBCB').textContent = 'OFFLINE - TAXA PADRÃO 10.50%';
-    }
+    
+    // HARDCODED CDI 14.15% - USER REQUEST
+    cdiData.cdi = 14.15;
+    cdiData.selic = 14.25;
+    document.getElementById('statusBCB').textContent = 'FIXED - CDI 14.15%';
+    document.getElementById('statusBCB').style.background = '#1e3a8a';
+    document.getElementById('statusBCB').style.color = '#bfdbfe';
+
 
     // AwesomeAPI for USD/BRL
     try {
