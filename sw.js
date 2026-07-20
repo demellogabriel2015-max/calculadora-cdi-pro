@@ -1,4 +1,14 @@
-const CACHE_NAME = 'invest-master-v5.7.5';
-const assets = ['./', './index.html', './manifest.json'];
-self.addEventListener('install', (e) => e.waitUntil(caches.open(CACHE_NAME).then((c) => c.addAll(assets))));
-self.addEventListener('fetch', (e) => e.respondWith(caches.match(e.request).then((r) => r || fetch(e.request))));
+const CACHE_NAME = 'invest-master-v5.8.2-CDI-FIX';
+const assets = ['./index.html', './manifest.json'];
+self.addEventListener('install', (e) => {
+  self.skipWaiting();
+  e.waitUntil(caches.open(CACHE_NAME).then((c) => c.addAll(assets)));
+});
+self.addEventListener('activate', (e) => {
+  e.waitUntil(caches.keys().then((keys) => Promise.all(
+    keys.map((k) => k !== CACHE_NAME && caches.delete(k))
+  )));
+});
+self.addEventListener('fetch', (e) => e.respondWith(
+  fetch(e.request).catch(() => caches.match(e.request))
+));
