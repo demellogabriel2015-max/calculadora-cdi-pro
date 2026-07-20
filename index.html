@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INVEST MASTER PRO - Global Markets</title>
+<link rel="manifest" href="manifest.json">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root {
+    --bg: #05070a;
+    --card: #0f172a;
+    --accent: #00f2ff;
+    --gold: #fbbf24;
+    --text: #f8fafc;
+    --muted: #94a3b8;
+    --success: #22c55e;
+    --danger: #ef4444;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+
+  header { text-align: center; margin-bottom: 30px; width: 100%; max-width: 1100px; display: flex; flex-direction: column; gap: 15px; }
+  .header-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+  
+  .market-strip {
+    display: flex;
+    gap: 20px;
+    background: rgba(255,255,255,0.03);
+    padding: 8px 15px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.05);
+    font-size: 0.7rem;
+    font-weight: 600;
+    width: 100%;
+    justify-content: center;
+    color: var(--muted);
+  }
+  .market-item span { color: var(--gold); margin-left: 5px; }
+
+  .brand { font-size: 1.5rem; font-weight: 800; color: var(--accent); letter-spacing: -1px; }
+  
+  #statusBCB {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 4px;
+    background: #1e293b;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .dashboard {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 20px;
+    width: 100%;
+    max-width: 1100px;
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid rgba(255,255,255,0.05);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+
+  .card-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .input-group { margin-bottom: 15px; }
+  label { display: block; font-size: 0.75rem; margin-bottom: 6px; color: var(--muted); }
+  input {
+    width: 100%;
+    background: #1e293b;
+    border: 1px solid #334155;
+    padding: 12px;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 1rem;
+    outline: none;
+  }
+
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+  .stat-box { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }
+  .stat-val { display: block; font-size: 1.2rem; font-weight: 700; margin-top: 4px; }
+  .small-label { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; }
+
+  .comparison-card {
+    background: linear-gradient(135deg, #161b2c 0%, #0f172a 100%);
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 4px solid var(--success);
+  }
+
+  .chart-container { height: 300px; width: 100%; margin-top: 20px; }
+
+  footer {
+    margin-top: 40px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    padding-bottom: 20px;
+  }
+  .footer-name { color: var(--accent); font-weight: 800; font-size: 0.85rem; display: block; margin-bottom: 4px; }
+
+  @media (max-width: 850px) {
+    .dashboard { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="brand">INVEST MASTER <span style="font-size:0.6rem; background:var(--accent); color:var(--bg); padding:2px 6px; border-radius:3px; vertical-align:middle;">PRO</span></div>
+    <div id="statusBCB">CONECTANDO AO BANCO CENTRAL...</div>
+  </div>
+  
+  <div class="market-strip">
+    <div class="market-item">DÓLAR: <span id="valDolar">--</span></div>
+    <div class="market-item">BTC/USD: <span id="valBTC">--</span></div>
+    <div class="market-item">BTC/BRL: <span id="valBTCBRL">--</span></div>
+  </div>
+</header>
+
+<div class="dashboard">
+  <div class="card">
+    <div class="card-title">SIMULAÇÃO ESTRATÉGICA</div>
+    <div class="input-group">
+      <label>CAPITAL INICIAL (R$)</label>
+      <input type="text" id="capital_display" value="10.000" oninput="handleMoneyInput(this)">
+      <input type="hidden" id="capital" value="10000">
+    </div>
+    <div class="input-group">
+      <label id="labelPrazo">PRAZO (MESES)</label>
+      <div style="display: flex; gap: 8px;">
+        <input type="number" id="prazo" value="12" oninput="update()" style="flex: 1;">
+        <select id="tipoPrazo" onchange="togglePrazo()" style="background: #334155; color: #fff; border: 1px solid #475569; border-radius: 8px; padding: 0 10px; cursor: pointer; font-size: 0.7rem; font-weight: 700;">
+          <option value="meses">MESES</option>
+          <option value="dias">DIAS</option>
+        </select>
+      </div>
+    </div>
+    <div class="input-group">
+      <label>RENTABILIDADE (% CDI)</label>
+      <input type="number" id="rentabilidade" value="100" oninput="update()">
+    </div>
+    
+    <div class="stats-grid">
+      <div class="stat-box">
+        <span class="small-label">TAXA CDI</span>
+        <span class="stat-val" id="taxaCDI" style="color:var(--gold)">--</span>
+      </div>
+      <div class="stat-box">
+        <span class="small-label">PRAZO (MESES)</span>
+        <span class="stat-val" id="totalMeses" style="color:var(--accent)">--</span>
+      </div>
+      <div class="stat-box" style="grid-column: span 2;">
+        <span class="small-label">ESTIMATIVA DIAS ÚTEIS</span>
+        <span class="stat-val" id="totalDiasUteis" style="color:var(--accent); font-size: 1rem;">--</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">PERFORMANCE DE RENDIMENTO</div>
+    <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
+      <div class="stat-box">
+        <span class="small-label">MONTANTE BRUTO</span>
+        <span class="stat-val" id="resBruto">--</span>
+      </div>
+      <div class="stat-box">
+        <span class="small-label">IMPOSTO (IR)</span>
+        <span class="stat-val" id="resIR" style="color:var(--danger)">--</span>
+      </div>
+      <div class="stat-box">
+        <span class="small-label">LÍQUIDO FINAL</span>
+        <span class="stat-val" id="resLiquido" style="color:var(--success)">--</span>
+      </div>
+    </div>
+
+    <div class="chart-container">
+      <canvas id="mainChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span class="footer-name">APP GABRIEL DE MELLO</span>
+  VERSION 5.2.0 - GLOBAL MARKETS EDITION
+</footer>
+
+<script>
+  let chart;
+  let cdiData = { cdi: 10.5, selic: 10.5 };
+
+  async function init() {
+    try {
+      const resp = await fetch('https://api.bcb.gov.br/dados/serie/bcdata.sgs.12/dados/ultimos/1?formato=json');
+      const data = await resp.json();
+      cdiData.cdi = parseFloat(data[0].valor) * 252;
+      cdiData.selic = cdiData.cdi + 0.10;
+      document.getElementById('statusBCB').textContent = 'ONLINE - DADOS BCB';
+      document.getElementById('statusBCB').style.background = '#064e3b';
+      document.getElementById('statusBCB').style.color = '#34d399';
+    } catch(e) {
+      document.getElementById('statusBCB').textContent = 'OFFLINE - TAXA PADRÃO 10.50%';
+    }
+
+    // AwesomeAPI for USD/BRL
+    try {
+      const resp = await fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL');
+      const data = await resp.json();
+      document.getElementById('valDolar').textContent = 'R$ ' + parseFloat(data.USDBRL.bid).toFixed(2);
+    } catch(e) {}
+
+    // CoinGecko for BTC
+    try {
+      const resp = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd,brl');
+      const data = await resp.json();
+      document.getElementById('valBTC').textContent = '$ ' + data.bitcoin.usd.toLocaleString();
+      document.getElementById('valBTCBRL').textContent = 'R$ ' + data.bitcoin.brl.toLocaleString();
+    } catch(e) {}
+
+    update();
+  }
+
+  function getIR(meses) {
+    const dias = meses * 30;
+    if (dias <= 180) return 0.225;
+    if (dias <= 360) return 0.20;
+    if (dias <= 720) return 0.175;
+    return 0.15;
+  }
+
+  function formatBRL(val) {
+    return val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function handleMoneyInput(el) {
+    let value = el.value.replace(/\D/g, '');
+    if (value === '') value = '0';
+    let numericValue = parseInt(value) / 1; // Simplificado para sem decimais no input mas aceitando milhar
+    document.getElementById('capital').value = numericValue;
+    el.value = numericValue.toLocaleString('pt-BR');
+    update();
+  }
+
+  function togglePrazo() {
+    const tipo = document.getElementById('tipoPrazo').value;
+    const label = document.getElementById('labelPrazo');
+    label.textContent = tipo === 'meses' ? 'PRAZO (MESES)' : 'PRAZO (DIAS ÚTEIS)';
+    update();
+  }
+
+  function getBusinessDaysInMonth(month, year) {
+    let count = 0;
+    const date = new Date(year, month, 1);
+    while (date.getMonth() === month) {
+      const day = date.getDay();
+      if (day !== 0 && day !== 6) count++;
+      date.setDate(date.getDate() + 1);
+    }
+    return count;
+  }
+
+  function getExactBusinessDays(months) {
+    const now = new Date();
+    let total = 0;
+    let currentMonth = now.getMonth();
+    let currentYear = now.getFullYear();
+
+    for (let i = 0; i < Math.floor(months); i++) {
+      total += getBusinessDaysInMonth(currentMonth, currentYear);
+      currentMonth++;
+      if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+      }
+    }
+    // Proporcional para meses quebrados
+    const remaining = months - Math.floor(months);
+    if (remaining > 0) {
+      total += Math.round(getBusinessDaysInMonth(currentMonth, currentYear) * remaining);
+    }
+    return total;
+  }
+
+  function getBusinessDaysFromDate(totalDays) {
+    let count = 0;
+    let businessDays = 0;
+    const date = new Date();
+    while (count < totalDays) {
+      date.setDate(date.getDate() + 1);
+      const day = date.getDay();
+      if (day !== 0 && day !== 6) businessDays++;
+      count++;
+    }
+    return businessDays;
+  }
+
+  function update() {
+    const cap = parseFloat(document.getElementById('capital').value) || 0;
+    const prazoValue = parseInt(document.getElementById('prazo').value) || 0;
+    const tipoPrazo = document.getElementById('tipoPrazo').value;
+    const rent = parseFloat(document.getElementById('rentabilidade').value) / 100;
+    
+    let meses, diasUteis;
+    if (tipoPrazo === 'meses') {
+      meses = prazoValue;
+      diasUteis = getExactBusinessDays(meses);
+    } else {
+      // Se o usuário inseriu DIAS CORRIDOS (ex: 30 dias)
+      // Precisamos calcular quantos desses são úteis
+      diasUteis = getBusinessDaysFromDate(prazoValue);
+      meses = prazoValue / 30; // meses comerciais para o cálculo de juros
+    }
+
+    // Atualiza células de tempo
+    document.getElementById('totalMeses').textContent = meses.toFixed(1);
+    document.getElementById('totalDiasUteis').textContent = Math.round(diasUteis);
+    
+    document.getElementById('taxaCDI').textContent = cdiData.cdi.toFixed(2) + '%';
+
+    const taxaMensal = Math.pow(1 + (cdiData.cdi/100 * rent), 1/12) - 1;
+    const labels = [];
+    const dataCDI = [];
+    const dataPoup = [];
+
+    let atual = cap;
+    let atualPoup = cap;
+    const taxaPoup = 0.005; 
+
+    // Loop baseado em meses (mesmo que fracionado para dias)
+    const loopLimit = Math.ceil(meses);
+    for(let i=0; i<=loopLimit; i++) {
+      labels.push('Mês ' + i);
+      dataCDI.push(atual);
+      dataPoup.push(atualPoup);
+      atual *= (1 + taxaMensal);
+      atualPoup *= (1 + taxaPoup);
+    }
+
+    // Cálculo final exato para o prazo escolhido
+    const rendimentoFinalCDI = cap * Math.pow(1 + taxaMensal, meses);
+    const bruto = rendimentoFinalCDI;
+    const lucro = bruto - cap;
+    const ir = lucro * getIR(meses);
+    const liq = bruto - ir;
+
+    document.getElementById('resBruto').textContent = 'R$ ' + formatBRL(bruto);
+    document.getElementById('resIR').textContent = 'R$ ' + formatBRL(ir);
+    document.getElementById('resLiquido').textContent = 'R$ ' + formatBRL(liq);
+
+    renderChart(labels, dataCDI, dataPoup);
+  }
+
+  function renderChart(labels, cdi, poup) {
+    const ctx = document.getElementById('mainChart').getContext('2d');
+    if (chart) chart.destroy();
+    chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          { label: 'INVESTIMENTO CDI', data: cdi, borderColor: '#00f2ff', tension: 0.4, fill: true, backgroundColor: 'rgba(0, 242, 255, 0.05)' },
+          { label: 'POUPANÇA', data: poup, borderColor: '#ef4444', borderDash: [5,5], tension: 0.4 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: '#94a3b8' } } },
+        scales: { 
+          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } },
+          x: { grid: { display: false }, ticks: { color: '#64748b' } }
+        }
+      }
+    });
+  }
+
+  init();
+</script>
+</body>
+</html>
