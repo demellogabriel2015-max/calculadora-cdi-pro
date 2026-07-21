@@ -160,7 +160,7 @@
     <div class="card-title">SIMULAÇÃO ESTRATÉGICA</div>
     <div class="input-group">
       <label>CAPITAL INICIAL (R$)</label>
-      <input type="text" id="capital_display" value="10.000" oninput="handleMoneyInput(this)">
+      <input type="text" id="capital_display" value="0" oninput="handleMoneyInput(this)">
       <input type="hidden" id="capital" value="0" step="0.01">
     </div>
     <div class="input-group">
@@ -219,7 +219,7 @@
 
 <footer>
   <span class="footer-name">APP GABRIEL DE MELLO</span>
-  VERSION 17.0.0-CACHE-KILLER</footer>
+  VERSION 18.0.0-FIX-COMPLETE</footer>
 
 <script>
   let chart;
@@ -345,7 +345,7 @@
     }
 
     // Atualiza células de tempo
-    document.getElementById('totalMeses').textContent = meses.toFixed(1);
+    document.getElementById('totalMeses').textContent = Math.floor(meses);
     document.getElementById('totalDiasUteis').textContent = Math.round(diasUteis);
     
     document.getElementById('taxaCDI').textContent = cdiData.cdi.toFixed(2) + '%';
@@ -411,6 +411,7 @@
 </script>
 
 <script>
+    
     async function refreshLiveContent() {
         try {
             // 1. Currencies (USD/BRL)
@@ -419,9 +420,12 @@
             document.getElementById('valDolar').textContent = 'R$ ' + parseFloat(dataUSD.USDBRL.bid).toFixed(2);
             
             // 2. Crypto (BTC)
-            const resBTC = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=brl');
+            const resBTC = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd,brl');
             const dataBTC = await resBTC.json();
-            document.getElementById('valBTC').textContent = 'R$ ' + dataBTC.bitcoin.brl.toLocaleString('pt-BR');
+            if (dataBTC.bitcoin) {
+                document.getElementById('valBTC').textContent = '$ ' + dataBTC.bitcoin.usd.toLocaleString('en-US');
+                document.getElementById('valBTCBRL').textContent = 'R$ ' + dataBTC.bitcoin.brl.toLocaleString('pt-BR');
+            }
 
             // 3. Status Update
             const now = new Date();
@@ -432,6 +436,7 @@
             console.log('Live update error', e);
         }
     }
+
 
     // Refresh every 30 seconds
     setInterval(refreshLiveContent, 30000);
