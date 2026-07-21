@@ -1,4 +1,13 @@
-const CACHE_NAME = 'invest-v12-bypass';
-self.addEventListener('install', e => self.skipWaiting());
-self.addEventListener('activate', e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.map(k => caches.delete(k)))).then(() => self.clients.claim())));
-self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));
+const CACHE_NAME = 'nuclear-cleanup-v17';
+self.addEventListener('install', e => {
+    self.skipWaiting();
+});
+self.addEventListener('activate', e => {
+    e.waitUntil(
+        caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
+        .then(() => self.clients.claim())
+    );
+});
+self.addEventListener('fetch', e => {
+    e.respondWith(fetch(e.request));
+});
