@@ -141,6 +141,26 @@
 </style>
 </head>
 <body>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Force header text
+        const headers = document.querySelectorAll('h1, .header-title');
+        headers.forEach(h => {
+            if(h.innerText.includes('INVEST MASTER')) {
+                h.innerText = h.innerText.replace('INVEST MASTER', 'CDI INVEST');
+            }
+        });
+        document.title = 'CDI INVEST PRO - Global Markets';
+        
+        // Final attempt at clearing any surviving SW
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(regs) {
+                for(let r of regs) r.unregister();
+            });
+        }
+    });
+</script>
+
 
 <header>
   <div class="header-top">
@@ -219,7 +239,7 @@
 
 <footer>
   <span class="footer-name">APP GABRIEL DE MELLO</span>
-  VERSION 19.0.0-BRAND-UPDATE</footer>
+  VERSION 20.0.0-FINAL-RENAME</footer>
 
 <script>
   let chart;
