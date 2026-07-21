@@ -1,7 +1,7 @@
 {
-  "name": "Invest Master Pro",
-  "short_name": "InvestMaster",
-  "description": "Calculadora Wealth Management - CDI vs Poupança",
+  "name": "CDI INVEST PRO",
+  "short_name": "CDI Invest",
+  "description": "Calculadora Wealth Management - CDI vs Poupan\u00e7a",
   "start_url": "index.html",
   "display": "standalone",
   "orientation": "portrait",
@@ -20,5 +20,8 @@
       "type": "image/png"
     }
   ],
-  "categories": ["finance", "productivity"]
+  "categories": [
+    "finance",
+    "productivity"
+  ]
 }
