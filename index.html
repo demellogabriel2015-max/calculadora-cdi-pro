@@ -219,7 +219,7 @@
 
 <footer>
   <span class="footer-name">APP GABRIEL DE MELLO</span>
-  VERSION 13.0.0-REAL-FIX</footer>
+  VERSION 14.0.0-REALTIME-LIVE</footer>
 
 <script>
   let chart;
@@ -408,6 +408,34 @@
   }
 
   init();
+</script>
+
+<script>
+    async function refreshLiveContent() {
+        try {
+            // 1. Currencies (USD/BRL)
+            const resUSD = await fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL');
+            const dataUSD = await resUSD.json();
+            document.getElementById('valDolar').textContent = 'R$ ' + parseFloat(dataUSD.USDBRL.bid).toFixed(2);
+            
+            // 2. Crypto (BTC)
+            const resBTC = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=brl');
+            const dataBTC = await resBTC.json();
+            document.getElementById('valBTC').textContent = 'R$ ' + dataBTC.bitcoin.brl.toLocaleString('pt-BR');
+
+            // 3. Status Update
+            const now = new Date();
+            document.getElementById('statusBCB').textContent = 'LIVE - ATUALIZADO ' + now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0') + ':' + now.getSeconds().toString().padStart(2, '0');
+            document.getElementById('statusBCB').style.background = '#059669';
+            document.getElementById('statusBCB').style.color = '#fff';
+        } catch(e) { 
+            console.log('Live update error', e);
+        }
+    }
+
+    // Refresh every 30 seconds
+    setInterval(refreshLiveContent, 30000);
+    refreshLiveContent();
 </script>
 </body>
 </html>
