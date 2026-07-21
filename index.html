@@ -161,12 +161,12 @@
     <div class="input-group">
       <label>CAPITAL INICIAL (R$)</label>
       <input type="text" id="capital_display" value="10.000" oninput="handleMoneyInput(this)">
-      <input type="hidden" id="capital" value="0">
+      <input type="hidden" id="capital" value="0" step="0.01">
     </div>
     <div class="input-group">
       <label id="labelPrazo">PRAZO (MESES)</label>
       <div style="display: flex; gap: 8px;">
-        <input type="number" id="prazo" value="12" oninput="update()" style="flex: 1;">
+        <input type="number" id="prazo" value="12" step="1" oninput="update()" style="flex: 1;">
         <select id="tipoPrazo" onchange="togglePrazo()" style="background: #334155; color: #fff; border: 1px solid #475569; border-radius: 8px; padding: 0 10px; cursor: pointer; font-size: 0.7rem; font-weight: 700;">
           <option value="meses">MESES</option>
           <option value="dias">DIAS</option>
@@ -219,7 +219,7 @@
 
 <footer>
   <span class="footer-name">APP GABRIEL DE MELLO</span>
-  VERSION 15.0.0-INIT-ZERO</footer>
+  VERSION 16.0.0-INT-ONLY</footer>
 
 <script>
   let chart;
