@@ -219,7 +219,7 @@
 
 <footer>
   <span class="footer-name">APP GABRIEL DE MELLO</span>
-  VERSION 16.0.0-INT-ONLY</footer>
+  VERSION 17.0.0-CACHE-KILLER</footer>
 
 <script>
   let chart;
@@ -436,6 +436,22 @@
     // Refresh every 30 seconds
     setInterval(refreshLiveContent, 30000);
     refreshLiveContent();
+</script>
+
+<script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            for(let registration of registrations) {
+                registration.unregister();
+            }
+        });
+    }
+    // Also clear Cache Storage via JS
+    if ('caches' in window) {
+        caches.keys().then(function(names) {
+            for (let name of names) caches.delete(name);
+        });
+    }
 </script>
 </body>
 </html>
