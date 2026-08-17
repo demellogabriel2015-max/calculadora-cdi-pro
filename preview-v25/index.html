@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="CDI Pro Invest">
 <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2452/2452144.png">
 <link rel="manifest" href="https://demellogabriel2015-max.github.io/calculadora-cdi-pro/manifest.json">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js?v=25.1.1"></script>
 <style>
   :root {
     --bg: #05070a;
@@ -165,7 +165,7 @@
 <header>
   <div class="header-top">
     <div class="brand">CDI PRO INVEST <span style="font-size:0.6rem; background:var(--accent); color:var(--bg); padding:2px 6px; border-radius:3px; vertical-align:middle;">PRO</span></div>
-    <div id="statusBCB">CONECTANDO AO BANCO CENTRAL...</div>
+    <div><div id="statusBCB">CONECTANDO ÀS FONTES ONLINE...</div><div id="lastUpdate" style="font-size:.62rem;color:var(--muted);margin-top:5px;text-align:right">Última atualização: aguardando</div></div>
   </div>
   
   <div class="market-strip">
@@ -250,267 +250,25 @@
   VERSION 25.1.0-PREVIEW-POUPANCA</footer>
 
 <script>
-  let chart;
-  let cdiData = { cdi: 14.15, selic: 14.25 };
-  let poupancaData = { mensal: 0.5, data: null, online: false };
-
-  async function init() {
-    
-    // HARDCODED CDI 14.15% - USER REQUEST
-    cdiData.cdi = 14.15;
-    cdiData.selic = 14.25;
-    document.getElementById('statusBCB').textContent = 'FIXED - CDI 14.15%';
-    document.getElementById('statusBCB').style.background = '#1e3a8a';
-    document.getElementById('statusBCB').style.color = '#bfdbfe';
-
-
-    // Poupança: série oficial do Banco Central do Brasil
-    try {
-      const respPoup = await fetch('https://api.bcb.gov.br/dados/serie/bcdata.sgs.195/dados/ultimos/1?formato=json', { cache: 'no-store' });
-      const dataPoupanca = await respPoup.json();
-      if (Array.isArray(dataPoupanca) && dataPoupanca[0]) {
-        poupancaData.mensal = parseFloat(String(dataPoupanca[0].valor).replace(',', '.'));
-        poupancaData.data = dataPoupanca[0].data;
-        poupancaData.online = true;
-      }
-    } catch (e) { console.log('Poupança online indisponível; usando último valor válido.'); }
-
-    // AwesomeAPI for USD/BRL
-    try {
-      const resp = await fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL');
-      const data = await resp.json();
-      document.getElementById('valDolar').textContent = 'R$ ' + parseFloat(data.USDBRL.bid).toFixed(2);
-    } catch(e) {}
-
-    // CoinGecko for BTC
-    try {
-      const resp = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd,brl');
-      const data = await resp.json();
-      document.getElementById('valBTC').textContent = '$ ' + data.bitcoin.usd.toLocaleString();
-      document.getElementById('valBTCBRL').textContent = 'R$ ' + data.bitcoin.brl.toLocaleString();
-    } catch(e) {}
-
-    update();
-  }
-
-  function getIR(meses) {
-    const dias = meses * 30;
-    if (dias <= 180) return 0.225;
-    if (dias <= 360) return 0.20;
-    if (dias <= 720) return 0.175;
-    return 0.15;
-  }
-
-  function formatBRL(val) {
-    return val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
-
-  function handleMoneyInput(el) {
-    let value = el.value.replace(/\D/g, '');
-    if (value === '') value = '0';
-    let numericValue = parseInt(value) / 1; // Simplificado para sem decimais no input mas aceitando milhar
-    document.getElementById('capital').value = numericValue;
-    el.value = numericValue.toLocaleString('pt-BR');
-    update();
-  }
-
-  function togglePrazo() {
-    const tipo = document.getElementById('tipoPrazo').value;
-    const label = document.getElementById('labelPrazo');
-    label.textContent = tipo === 'meses' ? 'PRAZO (MESES)' : 'PRAZO (DIAS ÚTEIS)';
-    update();
-  }
-
-  function getBusinessDaysInMonth(month, year) {
-    let count = 0;
-    const date = new Date(year, month, 1);
-    while (date.getMonth() === month) {
-      const day = date.getDay();
-      if (day !== 0 && day !== 6) count++;
-      date.setDate(date.getDate() + 1);
-    }
-    return count;
-  }
-
-  function getExactBusinessDays(months) {
-    const now = new Date();
-    let total = 0;
-    let currentMonth = now.getMonth();
-    let currentYear = now.getFullYear();
-
-    for (let i = 0; i < Math.floor(months); i++) {
-      total += getBusinessDaysInMonth(currentMonth, currentYear);
-      currentMonth++;
-      if (currentMonth > 11) {
-        currentMonth = 0;
-        currentYear++;
-      }
-    }
-    // Proporcional para meses quebrados
-    const remaining = months - Math.floor(months);
-    if (remaining > 0) {
-      total += Math.round(getBusinessDaysInMonth(currentMonth, currentYear) * remaining);
-    }
-    return total;
-  }
-
-  function getBusinessDaysFromDate(totalDays) {
-    let count = 0;
-    let businessDays = 0;
-    const date = new Date();
-    while (count < totalDays) {
-      date.setDate(date.getDate() + 1);
-      const day = date.getDay();
-      if (day !== 0 && day !== 6) businessDays++;
-      count++;
-    }
-    return businessDays;
-  }
-
-  function update() {
-    const cap = parseFloat(document.getElementById('capital').value) || 0;
-    const prazoValue = parseInt(document.getElementById('prazo').value) || 0;
-    const tipoPrazo = document.getElementById('tipoPrazo').value;
-    const rent = parseFloat(document.getElementById('rentabilidade').value) / 100;
-    
-    let meses, diasUteis;
-    if (tipoPrazo === 'meses') {
-      meses = prazoValue;
-      diasUteis = getExactBusinessDays(meses);
-    } else {
-      // Se o usuário inseriu DIAS CORRIDOS (ex: 30 dias)
-      // Precisamos calcular quantos desses são úteis
-      diasUteis = getBusinessDaysFromDate(prazoValue);
-      meses = prazoValue / 30; // meses comerciais para o cálculo de juros
-    }
-
-    // Atualiza células de tempo
-    document.getElementById('totalMeses').textContent = Math.floor(meses);
-    document.getElementById('totalDiasUteis').textContent = Math.round(diasUteis);
-    
-    document.getElementById('taxaCDI').textContent = cdiData.cdi.toFixed(2) + '%';
-    document.getElementById('taxaPoupanca').textContent = poupancaData.mensal.toFixed(4) + '%';
-
-    const taxaMensal = Math.pow(1 + (cdiData.cdi/100 * rent), 1/12) - 1;
-    const labels = [];
-    const dataCDI = [];
-    const dataPoup = [];
-
-    let atual = cap;
-    let atualPoup = cap;
-    const taxaPoup = Math.pow(1 + poupancaData.mensal / 100, 1) - 1; 
-
-    // Loop baseado em meses (mesmo que fracionado para dias)
-    const loopLimit = Math.ceil(meses);
-    for(let i=0; i<=loopLimit; i++) {
-      labels.push('Mês ' + i);
-      dataCDI.push(atual);
-      dataPoup.push(atualPoup);
-      atual *= (1 + taxaMensal);
-      atualPoup *= (1 + taxaPoup);
-    }
-
-    // Cálculo final exato para o prazo escolhido
-    const rendimentoFinalCDI = cap * Math.pow(1 + taxaMensal, meses);
-    const bruto = rendimentoFinalCDI;
-    const lucro = bruto - cap;
-    const ir = lucro * getIR(meses);
-    const liq = bruto - ir;
-    // Poupança: isenta de IR para pessoa física
-    const poupancaFinal = cap * Math.pow(1 + taxaPoup, meses);
-
-    document.getElementById('resBruto').textContent = 'R$ ' + formatBRL(bruto);
-    document.getElementById('resIR').textContent = 'R$ ' + formatBRL(ir);
-    document.getElementById('resLiquido').textContent = 'R$ ' + formatBRL(liq);
-    document.getElementById('resPoupanca').textContent = 'R$ ' + formatBRL(poupancaFinal);
-
-    renderChart(labels, dataCDI, dataPoup);
-  }
-
-  function renderChart(labels, cdi, poup) {
-    const ctx = document.getElementById('mainChart').getContext('2d');
-    if (chart) chart.destroy();
-    chart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [
-          { label: 'INVESTIMENTO CDI', data: cdi, borderColor: '#00f2ff', tension: 0.4, fill: true, backgroundColor: 'rgba(0, 242, 255, 0.05)' },
-          { label: 'POUPANÇA', data: poup, borderColor: '#ef4444', borderDash: [5,5], tension: 0.4 }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { labels: { color: '#94a3b8' } } },
-        scales: { 
-          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } },
-          x: { grid: { display: false }, ticks: { color: '#64748b' } }
-        }
-      }
-    });
-  }
-
-  init();
-</script>
-
-<script>
-    
-    async function refreshLiveContent() {
-        try {
-            // 0. Poupança oficial (Banco Central)
-            const resPoup = await fetch('https://api.bcb.gov.br/dados/serie/bcdata.sgs.195/dados/ultimos/1?formato=json', { cache: 'no-store' });
-            const livePoup = await resPoup.json();
-            if (Array.isArray(livePoup) && livePoup[0]) {
-                poupancaData.mensal = parseFloat(String(livePoup[0].valor).replace(',', '.'));
-                poupancaData.data = livePoup[0].data;
-                poupancaData.online = true;
-                document.getElementById('taxaPoupanca').textContent = poupancaData.mensal.toFixed(4) + '%';
-            }
-
-            // 1. Currencies (USD/BRL)
-            const resUSD = await fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL');
-            const dataUSD = await resUSD.json();
-            document.getElementById('valDolar').textContent = 'R$ ' + parseFloat(dataUSD.USDBRL.bid).toFixed(2);
-            
-            // 2. Crypto (BTC)
-            const resBTC = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd,brl');
-            const dataBTC = await resBTC.json();
-            if (dataBTC.bitcoin) {
-                document.getElementById('valBTC').textContent = '$ ' + dataBTC.bitcoin.usd.toLocaleString('en-US');
-                document.getElementById('valBTCBRL').textContent = 'R$ ' + dataBTC.bitcoin.brl.toLocaleString('pt-BR');
-            }
-
-            // 3. Status Update
-            const now = new Date();
-            document.getElementById('statusBCB').textContent = 'LIVE - ATUALIZADO ' + now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0') + ':' + now.getSeconds().toString().padStart(2, '0');
-            document.getElementById('statusBCB').style.background = '#059669';
-            document.getElementById('statusBCB').style.color = '#fff';
-        } catch(e) { 
-            console.log('Live update error', e);
-        }
-    }
-
-
-    // Refresh every 30 seconds
-    setInterval(refreshLiveContent, 30000);
-    refreshLiveContent();
-</script>
-
-<script>
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-            for(let registration of registrations) {
-                registration.unregister();
-            }
-        });
-    }
-    // Also clear Cache Storage via JS
-    if ('caches' in window) {
-        caches.keys().then(function(names) {
-            for (let name of names) caches.delete(name);
-        });
-    }
+const CACHE_VERSION='25.1.1'; let chart;
+let cdiData={cdi:14.15,selic:14.25,online:false,sourceDate:null};
+let poupancaData={mensal:0.5,data:null,online:false};
+const bust=u=>u+(u.includes('?')?'&':'?')+'v='+CACHE_VERSION+'&ts='+Date.now();
+async function fetchPoupanca(){const r=await fetch(bust('https://api.bcb.gov.br/dados/serie/bcdata.sgs.195/dados/ultimos/1?formato=json'),{cache:'no-store'});if(!r.ok)throw Error('BCB');const d=await r.json();if(!Array.isArray(d)||!d[0])throw Error('BCB sem dados');const v=parseFloat(String(d[0].valor).replace(',','.'));if(!Number.isFinite(v))throw Error('BCB inválida');poupancaData={mensal:v,data:d[0].data,online:true};}
+async function fetchCDI(){const r=await fetch(bust('https://www.b3.com.br/pt_br/market-data-e-indices/servicos-de-dados/market-data/consultas/mercado-de-derivativos/indicadores/indicadores-financeiros/'),{cache:'no-store'});if(!r.ok)throw Error('B3');const html=await r.text();const text=new DOMParser().parseFromString(html,'text/html').body.innerText.replace(/\s+/g,' ');const m=text.match(/TAXA CDI CETIP\s*\(a\.a\.\)\s*([\d.,]+)\s*%/i);if(!m)throw Error('CDI não localizado');const v=parseFloat(m[1].replace(/\./g,'').replace(',','.'));if(!Number.isFinite(v))throw Error('CDI inválido');const date=text.match(/TAXA CDI CETIP[\s\S]{0,180}?Atualizado em:\s*([\d/.-]+)/i);cdiData={cdi:v,selic:cdiData.selic,online:true,sourceDate:date?date[1]:null};}
+function setStatus(ok,detail){const e=document.getElementById('statusBCB');e.textContent=ok?'LIVE — B3 + BANCO CENTRAL':'OFFLINE — ÚLTIMO VALOR VÁLIDO';e.style.background=ok?'#059669':'#92400e';e.style.color='#fff';document.getElementById('lastUpdate').textContent='Última atualização: '+new Date().toLocaleString('pt-BR')+(detail?' • '+detail:'');}
+async function refreshLiveContent(){let ok=true,details=[];try{await fetchCDI();}catch(e){ok=false;details.push('CDI B3 indisponível');}try{await fetchPoupanca();}catch(e){ok=false;details.push('poupança BCB indisponível');}try{const d=await(await fetch(bust('https://economia.awesomeapi.com.br/json/last/USD-BRL'),{cache:'no-store'})).json();document.getElementById('valDolar').textContent='R$ '+parseFloat(d.USDBRL.bid).toFixed(2);}catch(e){}try{const d=await(await fetch(bust('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd,brl'),{cache:'no-store'})).json();if(d.bitcoin){document.getElementById('valBTC').textContent='$ '+d.bitcoin.usd.toLocaleString('en-US');document.getElementById('valBTCBRL').textContent='R$ '+d.bitcoin.brl.toLocaleString('pt-BR');}}catch(e){}setStatus(ok,details.join(' • '));update();}
+function getIR(m){const d=m*30;if(d<=180)return .225;if(d<=360)return .20;if(d<=720)return .175;return .15;}
+function formatBRL(v){return v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function handleMoneyInput(el){let v=el.value.replace(/\D/g,'');if(!v)v='0';const n=parseInt(v,10);document.getElementById('capital').value=n;el.value=n.toLocaleString('pt-BR');update();}
+function togglePrazo(){document.getElementById('labelPrazo').textContent=document.getElementById('tipoPrazo').value==='meses'?'PRAZO (MESES)':'PRAZO (DIAS ÚTEIS)';update();}
+function getBusinessDaysInMonth(m,y){let c=0,d=new Date(y,m,1);while(d.getMonth()===m){if(d.getDay()!==0&&d.getDay()!==6)c++;d.setDate(d.getDate()+1);}return c;}
+function getExactBusinessDays(x){const n=new Date();let t=0,m=n.getMonth(),y=n.getFullYear();for(let i=0;i<Math.floor(x);i++){t+=getBusinessDaysInMonth(m,y);if(++m>11){m=0;y++;}}const f=x-Math.floor(x);return t+(f?Math.round(getBusinessDaysInMonth(m,y)*f):0);}
+function getBusinessDaysFromDate(n){let c=0,b=0,d=new Date();while(c<n){d.setDate(d.getDate()+1);if(d.getDay()!==0&&d.getDay()!==6)b++;c++;}return b;}
+function update(){const cap=parseFloat(document.getElementById('capital').value)||0,pv=parseInt(document.getElementById('prazo').value,10)||0,r=(parseFloat(document.getElementById('rentabilidade').value)||0)/100;const meses=document.getElementById('tipoPrazo').value==='meses'?pv:pv/30,dias=document.getElementById('tipoPrazo').value==='meses'?getExactBusinessDays(meses):getBusinessDaysFromDate(pv);document.getElementById('totalMeses').textContent=Math.floor(meses);document.getElementById('totalDiasUteis').textContent=Math.round(dias);document.getElementById('taxaCDI').textContent=cdiData.cdi.toFixed(2)+'%';document.getElementById('taxaPoupanca').textContent=poupancaData.mensal.toFixed(4)+'%';const tm=Math.pow(1+(cdiData.cdi/100*r),1/12)-1,tp=poupancaData.mensal/100,labels=[],cd=[],po=[];let a=cap,b=cap;for(let i=0;i<=Math.ceil(meses);i++){labels.push('Mês '+i);cd.push(a);po.push(b);a*=1+tm;b*=1+tp;}const bruto=cap*Math.pow(1+tm,meses),lucro=bruto-cap,ir=Math.max(0,lucro*getIR(meses)),liq=bruto-ir,poup=cap*Math.pow(1+tp,meses);document.getElementById('resBruto').textContent='R$ '+formatBRL(bruto);document.getElementById('resIR').textContent='R$ '+formatBRL(ir);document.getElementById('resLiquido').textContent='R$ '+formatBRL(liq);document.getElementById('resPoupanca').textContent='R$ '+formatBRL(poup);renderChart(labels,cd,po);}
+function renderChart(labels,cdi,poup){const ctx=document.getElementById('mainChart').getContext('2d');if(chart)chart.destroy();chart=new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'INVESTIMENTO CDI (BRUTO)',data:cdi,borderColor:'#00f2ff',tension:.4,fill:true,backgroundColor:'rgba(0,242,255,.05)'},{label:'POUPANÇA (ISENTA DE IR)',data:poup,borderColor:'#ef4444',borderDash:[5,5],tension:.4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8'}}},scales:{y:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#64748b'}},x:{grid:{display:false},ticks:{color:'#64748b'}}}}});}
+console.assert(getIR(6)===.225&&getIR(12)===.20&&getIR(24)===.175&&getIR(25)===.15,'IR table');console.assert(0*Math.pow(1.01,12)===0,'zero capital');
+refreshLiveContent();setInterval(refreshLiveContent,30000);
 </script>
 </body>
 </html>
