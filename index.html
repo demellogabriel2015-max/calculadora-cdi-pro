@@ -8,11 +8,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="CDI Pro Invest">
-<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2452/2452144.png">
+<link rel="apple-touch-icon" href="icon-256.jpg">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="CDI Pro Invest">
-<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2452/2452144.png">
+<link rel="apple-touch-icon" href="icon-256.jpg">
 <link rel="manifest" href="https://demellogabriel2015-max.github.io/calculadora-cdi-pro/manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js?v=25.1.1"></script>
 <style>
@@ -142,23 +142,20 @@
 </head>
 <body>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Force header text
-        const headers = document.querySelectorAll('h1, .header-title');
-        headers.forEach(h => {
-            if(h.innerText.includes('INVEST MASTER')) {
-                h.innerText = h.innerText.replace('INVEST MASTER', 'CDI INVEST');
+    document.title = 'CDI PRO INVEST - Global Markets';
+    // Atualização automática: o mesmo endereço continua válido em todos os aparelhos.
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js?v=26', { updateViaCache: 'none' }).then(reg => {
+            reg.update();
+            setInterval(() => reg.update(), 5 * 60 * 1000);
+        }).catch(() => {});
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!sessionStorage.getItem('autoUpdated26')) {
+                sessionStorage.setItem('autoUpdated26', '1');
+                location.reload();
             }
         });
-        document.title = 'CDI PRO INVEST - Global Markets';
-        
-        // Final attempt at clearing any surviving SW
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function(regs) {
-                for(let r of regs) r.unregister();
-            });
-        }
-    });
+    }
 </script>
 
 
@@ -250,7 +247,7 @@
   VERSION 26.0.0-OFFICIAL-LIVE-RATES</footer>
 
 <script>
-const CACHE_VERSION='25.1.1'; let chart;
+const CACHE_VERSION='26.0.0'; let chart;
 let cdiData={cdi:14.15,selic:14.25,online:false,sourceDate:null};
 let poupancaData={mensal:0.5,data:null,online:false};
 const bust=u=>u+(u.includes('?')?'&':'?')+'v='+CACHE_VERSION+'&ts='+Date.now();
