@@ -244,7 +244,7 @@
 
 <footer>
   <span class="footer-name">De Mello & Lesina</span>
-  VERSION 26.0.0-OFFICIAL-LIVE-RATES</footer>
+  VERSION 26.1.0-LIVE-FIX</footer>
 
 <script>
 const CACHE_VERSION='26.0.0'; let chart;
@@ -252,7 +252,7 @@ let cdiData={cdi:14.15,selic:14.25,online:false,sourceDate:null};
 let poupancaData={mensal:0.5,data:null,online:false};
 const bust=u=>u+(u.includes('?')?'&':'?')+'v='+CACHE_VERSION+'&ts='+Date.now();
 async function fetchPoupanca(){const r=await fetch(bust('https://api.bcb.gov.br/dados/serie/bcdata.sgs.195/dados/ultimos/1?formato=json'),{cache:'no-store'});if(!r.ok)throw Error('BCB');const d=await r.json();if(!Array.isArray(d)||!d[0])throw Error('BCB sem dados');const v=parseFloat(String(d[0].valor).replace(',','.'));if(!Number.isFinite(v))throw Error('BCB inválida');poupancaData={mensal:v,data:d[0].data,online:true};}
-async function fetchCDI(){const r=await fetch(bust('https://www.b3.com.br/pt_br/market-data-e-indices/servicos-de-dados/market-data/consultas/mercado-de-derivativos/indicadores/indicadores-financeiros/'),{cache:'no-store'});if(!r.ok)throw Error('B3');const html=await r.text();const text=new DOMParser().parseFromString(html,'text/html').body.innerText.replace(/\s+/g,' ');const m=text.match(/TAXA CDI CETIP\s*\(a\.a\.\)\s*([\d.,]+)\s*%/i);if(!m)throw Error('CDI não localizado');const v=parseFloat(m[1].replace(/\./g,'').replace(',','.'));if(!Number.isFinite(v))throw Error('CDI inválido');const date=text.match(/TAXA CDI CETIP[\s\S]{0,180}?Atualizado em:\s*([\d/.-]+)/i);cdiData={cdi:v,selic:cdiData.selic,online:true,sourceDate:date?date[1]:null};}
+async function fetchCDI(){const r=await fetch(bust('https://api.bcb.gov.br/dados/serie/bcdata.sgs.12/dados/ultimos/1?formato=json'),{cache:'no-store'});if(!r.ok)throw Error('BCB CDI');const d=await r.json();if(!Array.isArray(d)||!d[0])throw Error('BCB CDI sem dados');const diaria=parseFloat(String(d[0].valor).replace(',','.'));if(!Number.isFinite(diaria))throw Error('CDI inválido');const anual=(Math.pow(1+diaria/100,252)-1)*100;cdiData={cdi:anual,selic:cdiData.selic,online:true,sourceDate:d[0].data};}
 function setStatus(ok,detail){const e=document.getElementById('statusBCB');e.textContent=ok?'LIVE — B3 + BANCO CENTRAL':'OFFLINE — ÚLTIMO VALOR VÁLIDO';e.style.background=ok?'#059669':'#92400e';e.style.color='#fff';document.getElementById('lastUpdate').textContent='Última atualização: '+new Date().toLocaleString('pt-BR')+(detail?' • '+detail:'');}
 async function refreshLiveContent(){let ok=true,details=[];try{await fetchCDI();}catch(e){ok=false;details.push('CDI B3 indisponível');}try{await fetchPoupanca();}catch(e){ok=false;details.push('poupança BCB indisponível');}try{const d=await(await fetch(bust('https://economia.awesomeapi.com.br/json/last/USD-BRL'),{cache:'no-store'})).json();document.getElementById('valDolar').textContent='R$ '+parseFloat(d.USDBRL.bid).toFixed(2);}catch(e){}try{const d=await(await fetch(bust('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd,brl'),{cache:'no-store'})).json();if(d.bitcoin){document.getElementById('valBTC').textContent='$ '+d.bitcoin.usd.toLocaleString('en-US');document.getElementById('valBTCBRL').textContent='R$ '+d.bitcoin.brl.toLocaleString('pt-BR');}}catch(e){}setStatus(ok,details.join(' • '));update();}
 function getIR(m){const d=m*30;if(d<=180)return .225;if(d<=360)return .20;if(d<=720)return .175;return .15;}
