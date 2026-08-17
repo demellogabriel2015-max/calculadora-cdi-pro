@@ -233,6 +233,10 @@
         <span class="small-label">LÍQUIDO FINAL</span>
         <span class="stat-val" id="resLiquido" style="color:var(--success)">--</span>
       </div>
+      <div class="stat-box">
+        <span class="small-label">POUPANÇA FINAL</span>
+        <span class="stat-val" id="resPoupanca" style="color:var(--gold)">--</span>
+      </div>
     </div>
 
     <div class="chart-container">
@@ -412,10 +416,13 @@
     const lucro = bruto - cap;
     const ir = lucro * getIR(meses);
     const liq = bruto - ir;
+    // Poupança: isenta de IR para pessoa física
+    const poupancaFinal = cap * Math.pow(1 + taxaPoup, meses);
 
     document.getElementById('resBruto').textContent = 'R$ ' + formatBRL(bruto);
     document.getElementById('resIR').textContent = 'R$ ' + formatBRL(ir);
     document.getElementById('resLiquido').textContent = 'R$ ' + formatBRL(liq);
+    document.getElementById('resPoupanca').textContent = 'R$ ' + formatBRL(poupancaFinal);
 
     renderChart(labels, dataCDI, dataPoup);
   }
